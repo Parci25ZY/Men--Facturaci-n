@@ -1,12 +1,5 @@
 [
     {
-        "dni": "0959307083",
-        "nombre": "Byron",
-        "apellido": "Yaguar",
-        "valor": 10000,
-        "card": true
-    },
-    {
         "dni": "1234567890",
         "nombre": "Antony",
         "apellido": "Teran",

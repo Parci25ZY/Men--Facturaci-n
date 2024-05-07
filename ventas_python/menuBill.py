@@ -13,6 +13,22 @@ import time
 import os
 from tabulate import tabulate
 from functools import reduce
+import math
+
+def verificar_cedula(cedula=""):
+    if len(cedula) != 10:
+        raise ValueError("Longitud de cédula incorrecta (debe ser exactamente 10 caracteres)")
+    
+    multiplicadores = [2, 1, 2, 1, 2, 1, 2, 1, 2]
+    ced_array = [int(d) for d in cedula[:9]]
+    ultimo_digito = int(cedula[9])
+    
+    resultado = [(i * j) if (i * j) < 10 else (i * j) - 9 for i, j in zip(ced_array, multiplicadores)]
+    suma_resultado = sum(resultado)
+    verificacion = math.ceil(float(suma_resultado) / 10) * 10 - suma_resultado
+    
+    return ultimo_digito == verificacion
+
 
 def draw_frame(character):
     print(character * 90)
@@ -47,59 +63,61 @@ class CrudClients(ICrud):
         header_spaces = (90 - header_length) // 2
         gotoxy(header_spaces, 3)
         print(blue_color + header_text)
-        gotoxy(16,4);print("𝗘𝗺𝗽𝗿𝗲𝘀𝗮: 𝗖𝗼𝗿𝗽𝗼𝗿𝗮𝗰𝗶ó𝗻 𝗲𝗹 𝗥𝗼𝘀𝗮𝗱𝗼 𝗿𝘂𝗰: 𝟬𝟴𝟳𝟲𝟱𝟰𝟯𝟮𝟵𝟰𝟬𝟬𝟭")
-        # Solicitar datos del cliente dentro del marco
-        gotoxy(15, 7)
-        nombre = input("➲ Nombre: ")
-        gotoxy(15, 9)
-        apellido = input("➲ Apellido: ")
-        gotoxy(15, 11)
-        while True:
-            gotoxy(15, 11)
-            dni = input("➲ Cedula: ")
-            if len(dni) == 10 and dni.isdigit():
-                # Leer los datos actuales de los clientes desde el archivo JSON
-                path, _ = os.path.split(os.path.abspath(__file__))
-                json_file = JsonFile(path + '/archivos/clients.json')
-                clients_data = json_file.read()
-                gotoxy(15, 13)
-                print(" " * 70)  # Imprimir espacios en blanco para borrar el mensaje
-
-                # Verificar si el DNI ya está registrado
-                dni_existe = any(client["dni"] == dni for client in clients_data)
-                if dni_existe:
-                    gotoxy(15, 13)
-                    print("\u001b[31m𝐄𝐬𝐭𝐞 𝐮𝐬𝐮𝐚𝐫𝐢𝐨 𝐲𝐚 𝐬𝐞 𝐞𝐧𝐜𝐮𝐞𝐧𝐭𝐫𝐚 𝐫𝐞𝐠𝐢𝐬𝐭𝐫𝐚𝐝𝐨.\u001b[0m")
-                else:
-                    break
-            else:
-                gotoxy(15, 13)
-                print("\u001b[31m❝𝐏𝐨𝐫 𝐟𝐚𝐯𝐨𝐫, 𝐢𝐧𝐠𝐫𝐞𝐬𝐞 𝐜𝐨𝐫𝐫𝐞𝐜𝐭𝐚𝐦𝐞𝐧𝐭𝐞 𝐬𝐮 𝐜é𝐝𝐮𝐥𝐚❞.\u001b[0m")
-
-        # Validar tipo de cliente (Regular o VIP)
-        gotoxy(15, 13)
-        card_input = input("➲ ¿Es un cliente VIO? (s/n): ")
-        card_type = True if card_input.lower() == "s" else False
-        if card_type:
-            new_client = VipClient(nombre, apellido, dni, card=True)
-        else:
-            new_client = RegularClient(nombre, apellido, dni, card=False)
-        # Guardar el cliente en el archivo JSON
-        path, _ = os.path.split(os.path.abspath(__file__))
-        json_file = JsonFile(path + '/archivos/clients.json')
-        clients_data = json_file.read()
-        # Convertir el nuevo cliente a un diccionario utilizando getJson()
-        new_client_dict = new_client.getJson()
-        # Agregar el nuevo cliente al archivo JSON
-        clients_data.append(new_client_dict)
-        json_file.save(clients_data)
-        # Mensaje de confirmación dentro del marco
-        gotoxy(15, 15) 
-        print(f'{new_client} Cedula: {dni}')
-        gotoxy(15, 17) 
-        print(green_color + "¡Cliente creado Exitosamente!")
-        time.sleep(3)
+        gotoxy(16, 4)
+        print("𝗘𝗺𝗽𝗿𝗲𝘀𝗮: 𝗖𝗼𝗿𝗽𝗼𝗿𝗮𝗰𝗶ó𝗻 𝗲𝗹 𝗥𝗼𝘀𝗮𝗱𝗼 𝗿𝘂𝗰: 𝟬𝟴𝟳𝟲𝟱𝟰𝟯𝟮𝟵𝟰𝟬𝟬𝟭")
     
+        while True:
+            gotoxy(15, 7)
+            nombre = input("➲ Nombre: ")
+            gotoxy(15, 9)
+            apellido = input("➲ Apellido: ")
+    
+            # Bucle para solicitar la cédula hasta que sea válida
+            while True:
+                gotoxy(15, 11)
+                dni = input("➲ Cedula: ")
+                try:
+                    if len(dni) != 10 or not dni.isdigit():
+                        raise ValueError("Longitud de cédula incorrecta o contiene caracteres no numéricos")
+    
+                    if verificar_cedula(dni):
+                        # Cédula válida, verificar si ya está registrado
+                        path, _ = os.path.split(os.path.abspath(__file__))
+                        json_file = JsonFile(path + '/archivos/clients.json')
+                        clients_data = json_file.read()
+                        dni_existe = any(client["dni"] == dni for client in clients_data)
+                        if dni_existe:
+                            gotoxy(15, 13)
+                            print(red_color + "Cliente ya registrado. Por favor, ingrese una cédula diferente." + reset_color)
+                        else:
+                            # Validar tipo de cliente (Regular o VIP)
+                            gotoxy(15, 13)
+                            card_input = input("➲ ¿Es un cliente VIP? (s/n): ")
+                            card_type = True if card_input.lower() == "s" else False
+                            if card_type:
+                                new_client = VipClient(nombre, apellido, dni, card=True)
+                            else:
+                                new_client = RegularClient(nombre, apellido, dni, card=False)
+    
+                            # Guardar el cliente en el archivo JSON
+                            new_client_dict = new_client.getJson()
+                            clients_data.append(new_client_dict)
+                            json_file.save(clients_data)
+    
+                            # Mensaje de confirmación dentro del marco
+                            gotoxy(15, 15)
+                            print(f'{new_client} Cedula: {dni}')
+                            gotoxy(15, 17)
+                            print(green_color + "¡Cliente creado Exitosamente!")
+                            time.sleep(3)
+                            return  # Salir de la función después de crear el cliente
+                    else:
+                        gotoxy(15, 13)
+                        print(red_color + "Cédula inválida, por favor ingrese una cédula válida." + reset_color)
+                except ValueError as e:
+                    gotoxy(15, 13)
+                    print(f"\u001b[31m❝{str(e)}❞.\u001b[0m")
+
     def update(self):
         draw_custom_frame()
         # Solicitar la cédula del cliente a actualizar
@@ -534,7 +552,7 @@ class CrudProducts(ICrud):
     
         # Mostrar el encabezado "Consulta de Productos y Precios"
         gotoxy(15, 4)
-        print(blue_color + "Consulta de Productos y Precios:" + reset_color)
+        print(blue_color + "Consulta de Productos y Precios:")
 
         # Preparar los datos para tabulate
         table_data = []
@@ -550,7 +568,7 @@ class CrudProducts(ICrud):
         headers = ["ID", "Descripción", "Precio", "Stock"]
 
         # Generar la tabla en formato tabulate
-        table = tabulate(table_data, headers=headers, tablefmt="fancy_grid", numalign="center", stralign="center")
+        table = tabulate(table_data, headers=headers, tablefmt="heavy_grid", numalign="center", stralign="center")
 
         # Establecer la posición y para imprimir la tabla
         start_row = 6  # Establece la fila inicial
@@ -648,73 +666,149 @@ class CrudSales(ICrud):
 
     def update(self):
         draw_custom_frame()
-        gotoxy(36, 3)
-        print(blue_color + '𝐌𝐨𝐝𝐢𝐟𝐢𝐜𝐚𝐜𝐢ó𝐧 𝐝𝐞 𝐕𝐞𝐧𝐭𝐚')
-        gotoxy(15, 5)
-        invoice_num = input(blue_color + "Por favor ingrese el número de factura a modificar: ")
+        gotoxy(30, 3)
+        print(blue_color + '𝐌𝐨𝐝𝐢𝐟𝐢𝐜𝐚𝐜𝐢𝐨́𝐧 𝐝𝐞 𝐕𝐞𝐧𝐭𝐚' + reset_color)
 
-        # Validación de la existencia de la factura en invoices.json
-        json_file = JsonFile(path + '/archivos/invoices.json')
-        invoices = json_file.find("factura", invoice_num)
-        
-        if not invoices:
-            gotoxy(15, 8)
-            print(red_color + "No hay registro de la factura ingresada." + reset_color)
-            gotoxy(43, 23)
-            input(blue_color + "Presione una tecla para continuar...")
-            return
-        
-        # Mostrar detalles de la factura usando la función consult()
-        self.consult()
+        while True:
+            # Solicitar número de factura a modificar
+            gotoxy(15, 5)
+            invoice_input = input(blue_color + "Ingrese el número de factura a modificar: " + reset_color)
 
-        # Preguntar al usuario si desea modificar la factura
-        gotoxy(15, 21)
-        modify_choice = input("¿Deseas modificar esta factura (s/n): ").lower()
+            if invoice_input.isdigit():
+                invoice_number = int(invoice_input)
+                json_file = JsonFile(path+'/archivos/invoices.json')
+                invoices = json_file.read()
 
-        if modify_choice == "n":
-            print("Modificación cancelada.")
-            gotoxy(43, 23)
-            input(blue_color + "Presione una tecla para continuar...")
-            return
-        
-        elif modify_choice != "s":
-            print("Opción no válida. Modificación cancelada.")
-            gotoxy(43, 23)
-            input(blue_color + "Presione una tecla para continuar...")
-            return
+                # Buscar factura con el número ingresado
+                found_invoice = None
+                for invoice in invoices:
+                    if invoice["factura"] == invoice_number:
+                        found_invoice = invoice
+                        break
+                
+                # Mostrar detalles de la factura
+                detalles_factura = {k: v for k, v in found_invoice.items() if k != 'detalle'}
+                detalle_venta = found_invoice["detalle"]
 
-        # Obtener el índice de la factura
-        index = next((i for i, inv in enumerate(invoices) if inv["factura"] == invoice_num), None)
+                gotoxy(9, 7)
+                print(blue_color+ f"Impresión de la Factura # {invoice_number}" )
+                print(tabulate([detalles_factura], headers="keys", tablefmt="heavy_grid", numalign="center"))
 
-        if index is None:
-            print("Factura no encontrada. Modificación cancelada.")
-            gotoxy(43, 23)
-            input(blue_color + "Presione una tecla para continuar...")
-            return
-        
-        # Preguntas de modificación
-        date_change = input("¿Deseas cambiar la fecha (deje vacío para mantener el actual): ")
-        product_change = input("¿Deseas cambiar el producto (deje vacío para mantener el actual): ")
-        quantity_change = input("¿Deseas cambiar la cantidad del producto (deje vacío para mantener el actual): ")
+                # Mostrar detalle de la venta
+                if detalle_venta:
+                    gotoxy(9, 14)
+                    print(blue_color+ "Detalle de la Venta:")
+                    headers = detalle_venta[0].keys()
+                    data = [[detalle[key] for key in headers] for detalle in detalle_venta]
+                    print(tabulate(data, headers=headers, tablefmt="heavy_grid", numalign="center"))
 
-        # Actualizar los datos en invoices.json
-        if date_change:
-            invoices[index]["Fecha"] = date_change
-        if product_change:
-            invoices[index]["Producto"] = product_change
-        if quantity_change:
-            invoices[index]["Cantidad"] = quantity_change
+                    # Confirmar modificación
+                    gotoxy(40, 14)
+                    modify_confirm = input(blue_color + "¿Desea modificar esta factura? (s/n): " + reset_color)
+                    if modify_confirm.lower() == 's':
+                        gotoxy(40, 15)
+                        product_to_modify = input(blue_color + "Ingrese el producto para cambiar la cantidad: "+ reset_color)
+                        gotoxy(40, 16)
+                        new_quantity = int(input(blue_color + "Ingrese la nueva cantidad para este producto: "+ reset_color))
 
-        # Guardar los cambios en el archivo JSON
-        json_file.save(invoices)
+                        # Buscar el producto en los detalles de la factura y actualizar la cantidad
+                        for detalle in detalle_venta:
+                            if detalle["poducto"] == product_to_modify:
+                                detalle["cantidad"] = new_quantity
+                                break
 
-        # Confirmación de modificación exitosa
-        print("Factura modificada exitosamente.")
-        gotoxy(43, 23)
-        input(blue_color + "Presione una tecla para continuar...")
-    
-    def delete():
-        pass
+                        # Recalcular subtotal y total
+                        subtotal = sum(detalle["precio"] * detalle["cantidad"] for detalle in detalle_venta)
+                        found_invoice["subtotal"] = subtotal
+                        found_invoice["total"] = subtotal - found_invoice["descuento"] + found_invoice["iva"]
+
+                        # Guardar cambios en el archivo JSON
+                        json_file.save(invoices)
+                        gotoxy(40, 17)
+                        print(green_color + "¡Cantidad de producto modificada exitosamente!" + reset_color)
+                        gotoxy(40, 18)
+                        x =input(blue_color + "presione una tecla para continuar...") 
+                        return  
+                    elif modify_confirm.lower() == 'n':
+                        gotoxy(9, 19)
+                        print(red_color + "Modificación cancelada." + reset_color)
+                        gotoxy(9, 20)
+                        x =input(blue_color + "presione una tecla para continuar...")      
+
+                    else:
+                        print(red_color + "Opción inválida. Por favor, ingrese 's' para modificar o 'n' para cancelar." + reset_color)
+                        continue
+                else:
+                    gotoxy(15, 20)
+                    print(red_color + "No hay detalles de venta para esta factura." + reset_color)
+                    continue
+
+    def delete(self):
+        draw_custom_frame()
+        gotoxy(30, 3)
+        print(blue_color + '𝐄𝐥𝐢𝐦𝐢𝐧𝐚𝐜𝐢𝐨́𝐧 𝐝𝐞 𝐅𝐚𝐜𝐭𝐮𝐫𝐚' + reset_color)
+
+        while True:
+            # Solicitar número de factura a eliminar
+            gotoxy(15, 5)
+            invoice_input = input(blue_color + "Ingrese el número de factura a eliminar: " + reset_color)
+
+            if invoice_input.isdigit():
+                invoice_number = int(invoice_input)
+                json_file = JsonFile(path + '/archivos/invoices.json')
+                invoices = json_file.read()
+
+                # Buscar factura con el número ingresado
+                found_invoice = None
+                for invoice in invoices:
+                    if invoice["factura"] == invoice_number:
+                        found_invoice = invoice
+                        break
+
+                if found_invoice:
+                    # Mostrar detalles de la factura
+                    detalles_factura = {k: v for k, v in found_invoice.items() if k != 'detalle'}
+                    detalle_venta = found_invoice["detalle"]
+
+                    gotoxy(9, 7)
+                    print(blue_color + f"Impresión de la Factura # {invoice_number}")
+                    print(tabulate([detalles_factura], headers="keys", tablefmt="heavy_grid", numalign="center"))
+
+                    # Mostrar detalle de la venta si existe
+                    if detalle_venta:
+                        gotoxy(9, 14)
+                        print(blue_color + "Detalle de la Venta:")
+                        headers = detalle_venta[0].keys()
+                        data = [[detalle[key] for key in headers] for detalle in detalle_venta]
+                        print(tabulate(data, headers=headers, tablefmt="heavy_grid", numalign="center"))
+
+                    # Confirmar eliminación
+                    gotoxy(40, 14)
+                    delete_confirm = input(blue_color + "¿Desea eliminar esta factura? (s/n): " + reset_color)
+                    if delete_confirm.lower() == 's':
+                        # Eliminar factura de la lista
+                        invoices.remove(found_invoice)
+                        json_file.save(invoices)
+                        gotoxy(40, 20)
+                        print(green_color + "¡Factura eliminada exitosamente!" + reset_color)
+                        gotoxy(40, 22)
+                        x = input(blue_color + "Presione una tecla para continuar..." + reset_color)
+                        return
+                    elif delete_confirm.lower() == 'n':
+                        gotoxy(9, 20)
+                        print(red_color + "Eliminación cancelada." + reset_color)
+                        gotoxy(9, 22)
+                        x = input(blue_color + "Presione una tecla para continuar..." + reset_color)
+                        return
+                    else:
+                        print(red_color + "Opción inválida. Por favor, ingrese 's' para eliminar o 'n' para cancelar." + reset_color)
+                else:
+                    gotoxy(15, 10)
+                    print(red_color + "Factura no encontrada." + reset_color)
+            else:
+                gotoxy(15, 10)
+                print(red_color + "Número de factura inválido. Por favor, ingrese un número válido." + reset_color)
+
     
     def consult(self):
         draw_custom_frame()
@@ -769,7 +863,7 @@ class CrudSales(ICrud):
             print(f"              sum Factura:{tot_invoices}")
             print(f"              reduce Facturas:{suma}")
         gotoxy(43,23)
-        x =input(blue_color + "presione una tecla para continuar...")         
+        x =input(blue_color + "Presione una tecla para continuar...")         
 
 # Bucle principal dentro del marco
 opc=''

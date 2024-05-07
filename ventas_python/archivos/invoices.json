@@ -1,7 +1,7 @@
 [
     {
         "factura": 1,
-        "Fecha": "2024-04-30",
+        "Fecha": "2024-04-29",
         "cliente": "Antony Teran",
         "subtotal": 9.0,
         "descuento": 0.9,
@@ -12,48 +12,6 @@
                 "poducto": "Coca Cola",
                 "precio": 1.5,
                 "cantidad": 6
-            }
-        ]
-    },
-    {
-        "factura": 2,
-        "Fecha": "2024-04-30",
-        "cliente": "Byron Yaguar",
-        "subtotal": 135.0,
-        "descuento": 13.5,
-        "iva": 14.58,
-        "total": 136.08,
-        "detalle": [
-            {
-                "poducto": "Coca Cola",
-                "precio": 1.5,
-                "cantidad": 90
-            }
-        ]
-    },
-    {
-        "factura": 3,
-        "Fecha": "2024-05-01",
-        "cliente": "Fredy Zambrano",
-        "subtotal": 89.0,
-        "descuento": 8.9,
-        "iva": 9.61,
-        "total": 89.71,
-        "detalle": [
-            {
-                "poducto": "Coca Cola",
-                "precio": 1.5,
-                "cantidad": 6
-            },
-            {
-                "poducto": "Jugos",
-                "precio": 20.0,
-                "cantidad": 2
-            },
-            {
-                "poducto": "Jugos",
-                "precio": 20.0,
-                "cantidad": 2
             }
         ]
     }
